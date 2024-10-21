@@ -248,9 +248,6 @@ map4 <- tm_shape(zion_elevation_resample) +
 tmap_arrange(map1, map4, nrow = 1) 
 ```
 
-```{r}
-
-```
 
 
 
