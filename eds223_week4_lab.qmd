@@ -178,6 +178,83 @@ terra::zonal(zion_elevation,reclassified, fun = mean) # zonal output is NOT a ra
 terra::global(zion_elevation, mean) # mean elevation across entire Zion park
 ```
 
+### Changing the extent 
+
+```{r}
+extend <- terra::extend(zion_elevation, c(1, 200))
+
+# zion_elevation + extend  can't add up bc not same # of cells 
+
+# extend zion_elevation to the extent we created above
+extend2 <- terra::extend(zion_elevation, extend)
+
+```
+
+### Origin
+```{r}
+origin(zion_elevation)
+```
+
+### Changing resolution
+
+```{r}
+# first we coarsen it
+zion_elevation_coarse <- terra::aggregate(zion_elevation,
+                                          fact = 5, # fact = scale at which to agg
+                                          fun = mean) 
+
+map1 <- tm_shape(zion_elevation) +
+  tm_raster(title = "Elevation (m)") +
+  tm_layout(main.title = "original")
+
+map2 <- tm_shape(zion_elevation_coarse) +
+  tm_raster(title = "Elevation (m)") +
+  tm_layout(main.title = "aggregated")
+
+tmap_arrange(map1, map2, nrow = 1) 
+```
+
+```{r}
+# now we disaggregate 
+
+zion_elevation_disagg <- terra::disagg(zion_elevation_coarse,
+                                       fact = 5,
+                                       method = "bilinear") # need a way to estimate value of new cells
+
+# let's check if same answer as original data (zion_elevation)
+
+if(identical(zion_elevation, zion_elevation_disagg)){
+  print("match!")
+}else{
+  warning("don't match!")
+}
+
+# don't get same values, we lost data when aggregating then disagg. 
+```
+
+### Resampling
+```{r}
+target_rast <- rast(xmin = -113.2, xmax = -112.9,
+                    ymin = 37.4, ymax = 37.5,
+                     nrow = 450, ncol = 460, # implicitly defining resolution. 
+                    crs = crs(zion_elevation)) # setting coordinate ref. syst.
+
+zion_elevation_resample <- terra::resample(zion_elevation, y = target_rast, method = "bilinear") # method = to estimate missing cells
+
+map4 <- tm_shape(zion_elevation_resample) +
+  tm_raster(title = "Elevation (m)") +
+  tm_layout(main.title = "resampled")
+
+tmap_arrange(map1, map4, nrow = 1) 
+```
+
+```{r}
+
+```
+
+
+
+
 
 
 
