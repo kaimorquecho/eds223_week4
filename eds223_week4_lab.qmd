@@ -120,3 +120,67 @@ masked2 <- terra::mask(zion_elevation, rmask) # applying our mask "rmask" to zio
 
 ```
 
+```{r}
+log(zion_elevation) # can add, subtract, function is applied cell by cell
+```
+
+
+
+# Reclassifying
+
+```{r}
+rcl <- matrix(c(1000, 1500, 1, 
+                1500, 2000, 2,
+                2000, 2500, 3,
+                2500, 3000, 4),
+              ncol = 3, byrow = TRUE) # create matrix to pass for reclass
+
+reclassified <- terra::classify(zion_elevation, rcl = rcl) 
+values(reclassified) <- as.factor(values(reclassified)) # reclassify = make groups
+
+tm_shape(reclassified) +
+  tm_raster()
+```
+
+```{r}
+ndvi_fun <- function(nir, red){
+  (nir - red)/(nir + red)
+}
+
+# there are helper functions to apply operations to multiple layers
+
+# lapply = apply local operation across multiple layers/matrix
+ndvi_rast <- lapp(landsat[[c(4,3)]], fun = ndvi_fun) # 4 and 3 are nir and red 
+
+tm_shape(ndvi_rast) +
+  tm_raster()
+
+```
+
+
+```{r}
+elevation_focal <- focal(zion_elevation, 
+      w = matrix (1,nrow = 9, ncol = 9),# defining the neighborhood's perimeter 9x9
+      fun = min) # operation 
+
+tm_shape(elevation_focal) +
+ tm_raster()
+
+# now the map has less detail, smaller values are not shown bc we have changed the min 
+```
+
+```{r}
+terra::zonal(zion_elevation,reclassified, fun = mean) # zonal output is NOT a raster. 
+# we used "reclassified" to designate zones/groups
+```
+
+```{r}
+terra::global(zion_elevation, mean) # mean elevation across entire Zion park
+```
+
+
+
+
+
+
+
