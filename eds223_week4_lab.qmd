@@ -1,0 +1,122 @@
+---
+title: "eds223_week4"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+install.packages("geodata")
+install.packages("spDataLarge", repos = "https://nowosad.github.io/drat/", type = "source")
+library(terra) # for dealing w raster
+library(tidyverse)
+library(tmap)
+library(kableExtra)
+library(spData)
+library(spDataLarge)
+library(geodata)
+```
+
+```{r}
+# rast to load in raster files
+zion_elevation <- rast(system.file("raster/srtm.tif", package = "spDataLarge"))
+
+zion_land <- rast(system.file("raster/nlcd.tif", package = "spDataLarge"))
+```
+
+```{r}
+tm_shape(zion_elevation) +
+  tm_raster(title = "Elevation (m)") #  numerical data in groups
+
+tm_shape(zion_land) +
+  tm_raster(title = "Land Cover") # categorical data
+
+# summary function gives us info on rasters
+```
+
+### this is a multi-layer raster
+```{r}
+landsat <- rast(system.file("raster/landsat.tif", package = "spDataLarge")) # tif is one of most common file types for raster data
+```
+
+### plot multi-layer raster
+```{r}
+tm_shape(landsat) +
+  tm_raster()
+# plots 4 different maps, one per layer
+```
+
+
+### we can subset the data
+```{r}
+landsat3 <- subset(landsat, "landsat_3") # each layer has its own name, or it can be called by number
+```
+
+```{r}
+tm_shape(landsat3) +
+  tm_raster() # we see just one layer
+```
+
+
+### can get global mean
+```{r}
+global(zion_elevation, mean) # take mean of entire matrix 
+freq(zion_land) 
+```
+
+### Indexing 
+
+```{r}
+zion_elevation[1,1] <- 0
+zion_elevation[1]
+
+landsat[1] <- 0
+
+test_raster <- zion_elevation
+test_raster[test_raster < 20] <- NA
+```
+
+### Spatial Subsetting
+```{r}
+point <- matrix(c(-113, 37.5), ncol = 2)
+
+# we are going to extract the value of the point from a raster
+
+terra::extract(zion_elevation, point() # result gave us value of the cell where point is located
+               
+```
+
+```{r}
+clip <- rast(xmin = -113.3, xmax = -113,ymin = 37.2, ymax = 37.9, resolution = 0.3, 
+             vals = 1)
+
+# we want to clip our big raster to match clip's size :
+zion_elevation_clip <- zion_elevation[clip, drop = FALSE] # we add "drop = FALSE" because 
+```
+
+```{r}
+tm_shape(zion_elevation) + 
+  tm_raster(title = "Elevation (m)")
+
+tm_shape(zion_elevation_clip) +
+  tm_raster()
+
+# clipped data has less detail
+```
+
+### Apply a mask
+```{r}
+# we need layers to match EXACTLY with one another. Important for making masks
+# Create copy of elevation taster
+rmask <- zion_elevation
+rmask[rmask < 2000] <- NA # we are saying store in NA all values lower than 2000
+```
+
+```{r}
+# bracket subsetting for making masks 
+masked1 <-zion_elevation[rmask, drop = FALSE]
+  
+masked2 <- terra::mask(zion_elevation, rmask) # applying our mask "rmask" to zion_elevation
+
+```
+
